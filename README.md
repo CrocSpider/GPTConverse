@@ -16,7 +16,7 @@ This project implements a voice-activated chatbot using OpenAI's ChatGPT-4 for g
 
 1. Clone this repository:
 
-    git clone [https://github.comCrocSpider/GPTConverse.git](https://github.com/CrocSpider/GPTConverse.git)
+    git clone [https://github.com/CrocSpider/GPTConverse.git](https://github.com/CrocSpider/GPTConverse.git)
 
 2. Navigate to the project directory:
 
