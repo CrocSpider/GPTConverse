@@ -7,6 +7,7 @@ from elevenlabs import set_api_key
 import io
 from pydub import AudioSegment
 from pydub.playback import play
+import webrtcvad
 
 
 # Initialize PyAudio
@@ -19,26 +20,53 @@ elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
 openai.api_key = openai_api_key
 set_api_key(elevenlabs_api_key)
 
-def get_voice_input():
-    # Start audio stream
-    stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=1024)
-    frames = []
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 16000
+CHUNK = 1024
+RECORD_SECONDS = 5
 
-    # Capture audio for a predetermined duration or until a stop condition
-    for i in range(0, int(16000 / 1024 * 5)):  # Example: 5 seconds of audio
-        data = stream.read(1024)
+vad = webrtcvad.Vad(1)
+
+def is_speech(frame):
+    return vad.is_speech(frame, RATE)
+
+def get_voice_input():
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=FORMAT, channels=CHANNELS,
+                        rate=RATE, input=True,
+                        frames_per_buffer=CHUNK)
+
+    print("Start speaking...")
+
+    frames = []
+    silence_frames = 0
+
+    while True:
+        data = stream.read(CHUNK)
         frames.append(data)
 
-    # Stop and close the stream
+        if not is_speech(data):
+            silence_frames += 1
+        else:
+            silence_frames = 0
+
+        # Stop if there's silence for more than 0.5 seconds
+        if silence_frames > int(RATE / CHUNK / 2):
+            break
+
+    print("Finished recording.")
+
     stream.stop_stream()
     stream.close()
+    audio.terminate()
 
-    # Save the audio to a temporary file
-    temp_audio_file = "temp_audio.wav"
+    # Save the recorded data as a WAV file for Whisper
+    temp_audio_file = "output.wav"
     wf = wave.open(temp_audio_file, 'wb')
-    wf.setnchannels(1)
-    wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-    wf.setframerate(16000)
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(audio.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
     wf.writeframes(b''.join(frames))
     wf.close()
 
