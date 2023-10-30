@@ -1,0 +1,7 @@
+openai
+pyaudio
+webrtcvad
+requests
+wave
+elevenlabs
+pydub
