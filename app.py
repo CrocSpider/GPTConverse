@@ -140,9 +140,12 @@ def play_voice_output(audio_data):
 
 def main():
     voice_choice = "jlUJTmEZ0IaJHW6BtKkJ"  # Replace with the name of the voice you want to use
+    stop_words = ["stop", "bye", "exit"]  # Replace with the stop word you want to use
 
     while True:
         user_text = get_voice_input()
+        if any(word in user_text for word in stop_words):
+            break
         ##chatgpt_response = send_to_chatgpt(user_text)
         chatgpt_response = send_to_ollama(user_text)
         audio_data = text_to_voice(chatgpt_response, voice_choice)
