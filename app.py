@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import openai
 import pyaudio
 import wave
@@ -8,7 +9,10 @@ import io
 from pydub import AudioSegment
 from pydub.playback import play
 import webrtcvad
+import requests
+import json
 
+load_dotenv()
 
 # Initialize PyAudio
 audio = pyaudio.PyAudio()
@@ -23,10 +27,10 @@ set_api_key(elevenlabs_api_key)
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-CHUNK = 1024
+CHUNK = 480
 RECORD_SECONDS = 5
 
-vad = webrtcvad.Vad(1)
+vad = webrtcvad.Vad()
 
 def is_speech(frame):
     return vad.is_speech(frame, RATE)
@@ -52,7 +56,7 @@ def get_voice_input():
             silence_frames = 0
 
         # Stop if there's silence for more than 0.5 seconds
-        if silence_frames > int(RATE / CHUNK / 2):
+        if silence_frames > int(RATE / CHUNK):
             break
 
     print("Finished recording.")
@@ -76,6 +80,19 @@ def get_voice_input():
     text_input = result["text"]
 
     return text_input
+
+def send_to_ollama(text):
+    # Send text to OpenAI API and receive response using ChatGPT-4
+    url = "https://ollama-test.apps.private.k8s.springernature.io/api/generate"
+    data = {
+            "model": "mistral:7b",
+            "prompt":text,
+            "stream": False
+            }
+    response = requests.post(url, json=data)
+    audio_data = response.text  # Assuming API returns audio data directly
+    parsed_response = json.loads(audio_data)
+    return parsed_response["response"]
 
 def send_to_chatgpt(text):
     # Send text to OpenAI API and receive response using ChatGPT-4
@@ -122,11 +139,15 @@ def play_voice_output(audio_data):
 
 
 def main():
-    voice_choice = "YdsnigEr6KLWyV7njdiO"  # Replace with the name of the voice you want to use
+    voice_choice = "jlUJTmEZ0IaJHW6BtKkJ"  # Replace with the name of the voice you want to use
+    stop_words = ["stop", "bye", "exit"]  # Replace with the stop word you want to use
 
     while True:
         user_text = get_voice_input()
-        chatgpt_response = send_to_chatgpt(user_text)
+        if any(word in user_text for word in stop_words):
+            break
+        ##chatgpt_response = send_to_chatgpt(user_text)
+        chatgpt_response = send_to_ollama(user_text)
         audio_data = text_to_voice(chatgpt_response, voice_choice)
         play_voice_output(audio_data)
 
