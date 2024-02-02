@@ -7,8 +7,8 @@ This project implements a voice-activated chatbot using OpenAI's ChatGPT-4 for g
 
 - Voice input and output
 - Continuous conversation flow
-- Uses ChatGPT-4 for generating responses
-- ElevenLabs for turning text responses into voice
+- Uses ChatGPT-4 for generating responses, using locally deployed model via ollama.
+- ElevenLabs for turning text responses into voice or OpenAI.
 - Whisper for transcribing voice input
 - Voice activity detection for dynamic response lengths
 
@@ -32,7 +32,7 @@ This project implements a voice-activated chatbot using OpenAI's ChatGPT-4 for g
 Before running the application, you need to set up the following environment variables with your API keys:
 
 - `OPENAI_API_KEY`: Your OpenAI API key for accessing ChatGPT-4.
-- `ELEVENLABS_API_KEY`: Your ElevenLabs API key for voice synthesis.
+- `ELEVENLABS_API_KEY`: Your ElevenLabs API key for voice synthesis. **not needed if you use openAI TTS**
 
 You can set these variables in your environment or add them to a `.env` file in the project root (if using a library like `python-dotenv` for environment management).
 

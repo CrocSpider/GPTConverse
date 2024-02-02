@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Voice Web App</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            text-align: center;
+        }
+
+        button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease; /* Add transition effect */
+        }
+
+        button:hover {
+            background-color: #c0392b;
+        }
+
+        .recording {
+            background-color: #3498db; /* Set color for recording state */
+        }
+    </style>
+</head>
+<body>
+    <form action="/process_voice" method="post">
+        <button id="recordButton" type="submit" onclick="startRecording()">Chat</button>
+    </form>
+
+    <script>
+        function startRecording() {
+            var recordButton = document.getElementById('recordButton');
+
+            // Change the button text to 'Recording' and set the recording class
+            recordButton.innerText = 'Recording';
+            recordButton.classList.add('recording');
+
+            // Simulate recording for 5 seconds (you can replace this with actual recording logic)
+            setTimeout(() => {
+                // Revert back to 'Chat' after completing the recording
+                recordButton.innerText = 'Chat';
+                recordButton.classList.remove('recording');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,7 @@
 import os
+import concurrent.futures
+import time
+import itertools
 from dotenv import load_dotenv
 import openai
 import pyaudio
@@ -55,7 +58,7 @@ def get_voice_input():
         else:
             silence_frames = 0
 
-        # Stop if there's silence for more than 0.5 seconds
+        # Stop if there's silence for more than 1 seconds
         if silence_frames > int(RATE / CHUNK):
             break
 
@@ -76,8 +79,11 @@ def get_voice_input():
 
     # Use Whisper for speech-to-text
     with open(temp_audio_file, 'rb') as audio_file:
-        result = openai.Audio.transcribe("whisper-1", audio_file)
-    text_input = result["text"]
+        result = openai.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file,
+            response_format="text")
+    text_input = result
 
     return text_input
 
@@ -96,7 +102,9 @@ def send_to_ollama(text):
 
 def send_to_chatgpt(text):
     # Send text to OpenAI API and receive response using ChatGPT-4
-    response = openai.ChatCompletion.create(model="gpt-4", messages=[
+    response = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[
             {
                 "role": "system",
                 "content": "You are a highly skilled AI with wide range of knowledge and skills."
@@ -106,7 +114,24 @@ def send_to_chatgpt(text):
                 "content": text
             }
         ])  # Adjust model name if needed
-    return response['choices'][0]['message']['content']
+    return response.choices[0].message.content
+
+
+def tts_openai(text):
+
+    response = openai.audio.speech.create(
+      model="tts-1",
+      voice="alloy",
+      input=text
+    )
+
+    audio_data = b""
+    for chunk in response.iter_bytes(chunk_size=1024):
+        if chunk:
+            audio_data += chunk
+
+    return audio_data
+
 
 def text_to_voice(text, voice):
 
@@ -138,6 +163,26 @@ def play_voice_output(audio_data):
     play(audio_segment)
 
 
+def print_letter_by_letter(text):
+    for char in text:
+        print(char, end='', flush=True)
+        time.sleep(0.02)  # Adjust the delay to control the speed
+
+def print_waiting_animation(text):
+    spinner = itertools.cycle(['⣾', '⣷', '⣯', '⣟', '⡿', '⢿', '⣻', '⣽'])
+    max_iterations = 50  # Maximum number of iterations for the animation
+    for i in range(max_iterations):
+        print(next(spinner), end='\r', flush=True)
+        time.sleep(0.1)  # Adjust the delay to control the speed
+
+        # Check if the tts_openai function has returned, and break the loop if so
+        if i > len(text) / 3:  # Adjust the factor to control when to stop the animation
+            print(' ' * len(text), end='\r', flush=True)  # Overwrite the line with spaces
+            break
+
+    print()  # Move to the next line after stopping the animation
+
+
 def main():
     voice_choice = "jlUJTmEZ0IaJHW6BtKkJ"  # Replace with the name of the voice you want to use
     stop_words = ["stop", "bye", "exit"]  # Replace with the stop word you want to use
@@ -146,9 +191,24 @@ def main():
         user_text = get_voice_input()
         if any(word in user_text for word in stop_words):
             break
+
+        print("You:")
+        print_letter_by_letter(user_text)
+        print()
+
         ##chatgpt_response = send_to_chatgpt(user_text)
+        #chatgpt_response = send_to_ollama(user_text)
+
         chatgpt_response = send_to_ollama(user_text)
-        audio_data = text_to_voice(chatgpt_response, voice_choice)
+        print("AI:")
+        print_waiting_animation(chatgpt_response)
+        print_letter_by_letter(chatgpt_response)
+        
+        #print("GPT Response:", chatgpt_response)  # Print the GPT response to the screen
+        #audio_data = text_to_voice(chatgpt_response, voice_choice)
+        audio_data = tts_openai(chatgpt_response)
+        
+        print()  # Move to the next line after displaying all words
         play_voice_output(audio_data)
 
 if __name__ == "__main__":

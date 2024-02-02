@@ -5,5 +5,6 @@ wave
 elevenlabs
 pydub
 webrtcvad-wheels
-requests
-json
+python-dotenv
+ffmpeg
+flask
